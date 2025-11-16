@@ -144,6 +144,31 @@ class AdsHub:
             )
         elif plc_datatype in unpack_formats:
             value = struct.unpack(unpack_formats[plc_datatype], bytearray(data))[0]
+        elif isinstance(plc_datatype, type) and issubclass(plc_datatype, ctypes.Array):
+            elem_type = getattr(plc_datatype, "_type_", None)
+            length = getattr(plc_datatype, "_length_", None)
+
+            fmt_map = {
+                ctypes.c_byte: "b",
+                ctypes.c_ubyte: "B",
+                ctypes.c_short: "h",
+                ctypes.c_ushort: "H",
+                ctypes.c_int: "i",
+                ctypes.c_uint: "I",
+                ctypes.c_float: "f",
+                ctypes.c_double: "d",
+            }
+
+            if elem_type in fmt_map and isinstance(length, int):
+                fmt = "<" + (fmt_map[elem_type] * length)
+                try:
+                    value = struct.unpack(fmt, bytearray(data))
+                except struct.error:
+                    value = tuple(bytearray(data))
+                    _LOGGER.warning("Failed to unpack array for %s with format %s", notification_item.name, fmt)
+            else:
+                value = tuple(bytearray(data))
+                _LOGGER.warning("Unknown array element type for %s: %s", notification_item.name, elem_type)
         else:
             value = bytearray(data)
             _LOGGER.warning("No callback available for this datatype")

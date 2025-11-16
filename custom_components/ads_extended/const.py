@@ -39,3 +39,4 @@ class AdsType(StrEnum):
     DATE = "date"
     DATE_AND_TIME = "dt"
     TOD = "tod"
+    ARR_UINT = "arr_uint"
