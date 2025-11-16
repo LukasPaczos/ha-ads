@@ -1,10 +1,12 @@
 {
-  "domain": "ads",
-  "name": "ADS",
-  "codeowners": ["@mrpasztoradam"],
-  "documentation": "https://www.home-assistant.io/integrations/ads",
+  "domain": "ads_extended",
+  "name": "Beckhoff ADS - Extended",
+  "codeowners": ["@LukasPaczos"],
+  "documentation": "https://github.com/LukasPaczos/ha-ads",
+  "issue_tracker": "https://github.com/LukasPaczos/ha-ads/issues",
   "iot_class": "local_push",
   "loggers": ["pyads"],
   "quality_scale": "legacy",
-  "requirements": ["pyads==3.4.0"]
+  "requirements": ["pyads==3.4.0"],
+  "version": "0.1.0"
 }

@@ -10,7 +10,7 @@ from homeassistant.util.hass_dict import HassKey
 if TYPE_CHECKING:
     from .hub import AdsHub
 
-DOMAIN = "ads"
+DOMAIN = "ads_extended"
 
 DATA_ADS: HassKey[AdsHub] = HassKey(DOMAIN)
 
