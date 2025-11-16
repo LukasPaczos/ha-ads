@@ -39,6 +39,7 @@ ADS_TYPEMAP = {
     AdsType.DATE: pyads.PLCTYPE_DATE,
     AdsType.DATE_AND_TIME: pyads.PLCTYPE_DT,
     AdsType.TOD: pyads.PLCTYPE_TOD,
+    AdsType.ARR_UINT: pyads.PLCTYPE_ARR_UINT,
 }
 
 CONF_ADS_FACTOR = "factor"
