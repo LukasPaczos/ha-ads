@@ -1,8 +1,9 @@
-"""Support for Automation Device Specification (ADS)."""
+"""Support for Automation Device Specification (ADS) with UINT array support."""
 
 import logging
 
 import pyads
+from pyads.constants import PLCTYPE_ARR_UINT
 import voluptuous as vol
 
 from homeassistant.const import (
@@ -38,13 +39,12 @@ ADS_TYPEMAP = {
     AdsType.TIME: pyads.PLCTYPE_TIME,
     AdsType.DATE: pyads.PLCTYPE_DATE,
     AdsType.DATE_AND_TIME: pyads.PLCTYPE_DT,
-    AdsType.TOD: pyads.PLCTYPE_TOD,
+    AdsType.TOD: pyads.PLCTYPE_TOD
 }
 
 CONF_ADS_FACTOR = "factor"
 CONF_ADS_TYPE = "adstype"
 CONF_ADS_VALUE = "value"
-
 
 SERVICE_WRITE_DATA_BY_NAME = "write_data_by_name"
 
@@ -64,7 +64,10 @@ CONFIG_SCHEMA = vol.Schema(
 SCHEMA_SERVICE_WRITE_DATA_BY_NAME = vol.Schema(
     {
         vol.Required(CONF_ADS_TYPE): vol.Coerce(AdsType),
-        vol.Required(CONF_ADS_VALUE): vol.Coerce(int),
+        vol.Required(CONF_ADS_VALUE): vol.Any(
+            vol.Coerce(int),
+            [vol.Coerce(int)]
+        ),
         vol.Required(CONF_ADS_VAR): cv.string,
     }
 )
@@ -96,15 +99,32 @@ def setup(hass: HomeAssistant, config: ConfigType) -> bool:
     hass.bus.listen(EVENT_HOMEASSISTANT_STOP, ads.shutdown)
 
     def handle_write_data_by_name(call: ServiceCall) -> None:
-        """Write a value to the connected ADS device."""
+        """Write a value (scalar or array) to PLC variable via ADS."""
+
         ads_var: str = call.data[CONF_ADS_VAR]
         ads_type: AdsType = call.data[CONF_ADS_TYPE]
-        value: int = call.data[CONF_ADS_VALUE]
+        value = call.data[CONF_ADS_VALUE]
 
         try:
+            if ads_type == AdsType.ARR_UINT:
+                if not isinstance(value, list):
+                    raise ValueError(
+                        "ARR_UINT requires list of integers in 'value'."
+                    )
+
+                array_len = len(value)
+                c_array_type = PLCTYPE_ARR_UINT(array_len)
+                c_array = c_array_type(*value)
+
+                ads.write_by_name(ads_var, c_array, c_array_type)
+                return
+
             ads.write_by_name(ads_var, value, ADS_TYPEMAP[ads_type])
+
         except pyads.ADSError as err:
-            _LOGGER.error(err)
+            _LOGGER.error("ADS write error: %s", err)
+        except Exception as exc:
+            _LOGGER.error("ADS service error: %s", exc)
 
     hass.services.register(
         DOMAIN,
